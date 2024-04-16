@@ -19,40 +19,42 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Blur(BlurArgs),
-    Generate(IFile),
+    Blur(CmdArgs),
+    Brighten(CmdArgs)
 }
 
 #[derive(Args, Debug)]
-struct BlurArgs {
+struct CmdArgs {
     infile: String,
-    outfile: String,
-    factor: f32,
-}
-
-#[derive(Args, Debug)]
-struct IFile {
-    infile: String,
+    outfile: Option<String>,
+    factor: Option<i32>,
 }
 
 fn main() {
     let cli = Cli::parse();
     match &cli.cmd {
         Commands::Blur(args) => {
-            blur(&args.infile, &args.outfile, args.factor)
+            let outfile = args.outfile.as_ref().expect("OUTFILE is required.");
+            let factor = args.factor.unwrap_or(10);
+            blur(&args.infile, outfile, factor)
         },
-        Commands::Generate(file) => {
-            println!("{}", file.infile)
-        }
+        Commands::Brighten(args) => {
+            let outfile = args.outfile.as_ref().expect("OUTFILE is required.");
+            let factor = args.factor.unwrap_or(10);
+            brighten(&args.infile, outfile, factor)
+        },
     }
 }
 
-fn blur(infile: &String, outfile: &String, factor: f32) {
+fn blur(infile: &String, outfile: &String, factor: i32) {
     let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.blur(factor);
-    // **OPTION**
-    // Parse the blur amount (an f32) from the command-line and pass it through
-    // to this function, instead of hard-coding it to 2.0.
+    let img2 = img.blur(factor as f32);
+    img2.save(outfile).expect("Failed writing OUTFILE.");
+}
+
+fn brighten(infile: &String, outfile: &String, factor: i32) {
+    let img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.brighten(factor);
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
@@ -148,15 +150,6 @@ fn blur(infile: &String, outfile: &String, factor: f32) {
 //     std::process::exit(-1);
 // }
 //
-// fn brighten(infile: String, outfile: String) {
-//     let img = image::open(infile).expect("Failed to open INFILE.");
-//     let img2 = img.brighten(30);
-//
-//     // Challenge: parse the brightness amount from the command-line and pass it
-//     // through to this function.
-//
-//     img2.save(outfile).expect("Failed writing OUTFILE.");
-// }
 //
 // fn crop(infile: String, outfile: String) {
 //     let mut img = image::open(infile).expect("Failed to open INFILE.");
