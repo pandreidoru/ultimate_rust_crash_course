@@ -9,8 +9,9 @@
 
 use clap::{Args, Parser, Subcommand};
 
+/// Image processing application
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
+#[command(version)]
 struct Cli {
     #[command(subcommand)]
     cmd: Commands,
@@ -18,14 +19,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Blur(IOFiles),
+    Blur(BlurArgs),
     Generate(IFile),
 }
 
 #[derive(Args, Debug)]
-struct IOFiles {
+struct BlurArgs {
     infile: String,
     outfile: String,
+    factor: f32,
 }
 
 #[derive(Args, Debug)]
@@ -36,13 +38,22 @@ struct IFile {
 fn main() {
     let cli = Cli::parse();
     match &cli.cmd {
-        Commands::Blur(files) => {
-            println!("{} {}", files.infile, files.outfile)
+        Commands::Blur(args) => {
+            blur(&args.infile, &args.outfile, args.factor)
         },
         Commands::Generate(file) => {
             println!("{}", file.infile)
         }
     }
+}
+
+fn blur(infile: &String, outfile: &String, factor: f32) {
+    let img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.blur(factor);
+    // **OPTION**
+    // Parse the blur amount (an f32) from the command-line and pass it through
+    // to this function, instead of hard-coding it to 2.0.
+    img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
 //     let mut args: Vec<String> = std::env::args().skip(1).collect();
@@ -135,15 +146,6 @@ fn main() {
 //     // Print useful information about what subcommands and arguments you can use
 //     // println!("...");
 //     std::process::exit(-1);
-// }
-//
-// fn blur(infile: String, outfile: String) {
-//     let img = image::open(infile).expect("Failed to open INFILE.");
-//     let img2 = img.blur(8.0);
-//     // **OPTION**
-//     // Parse the blur amount (an f32) from the command-line and pass it through
-//     // to this function, instead of hard-coding it to 2.0.
-//     img2.save(outfile).expect("Failed writing OUTFILE.");
 // }
 //
 // fn brighten(infile: String, outfile: String) {

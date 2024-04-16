@@ -2,7 +2,7 @@
 name = "mirage"
 version = "0.1.0"
 edition = "2021"
-about = "Image processing application"
+description = "Image processing application"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
