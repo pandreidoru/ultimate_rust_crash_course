@@ -7,7 +7,8 @@
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
+use std::str::FromStr;
 
 /// Image processing application
 #[derive(Parser)]
@@ -20,7 +21,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Blur(CmdArgs),
-    Brighten(CmdArgs)
+    Brighten(CmdArgs),
+    Crop(CropArgs),
+    Rotate(RotateArgs),
 }
 
 #[derive(Args, Debug)]
@@ -28,6 +31,44 @@ struct CmdArgs {
     infile: String,
     outfile: Option<String>,
     factor: Option<i32>,
+}
+
+#[derive(Args, Debug)]
+struct CropArgs {
+    infile: String,
+    outfile: String,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+}
+
+#[derive(Args, Debug)]
+struct RotateArgs {
+    infile: String,
+    outfile: String,
+    #[arg(value_enum)]
+    angle: Angle,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+enum Angle {
+    _90,
+    _180,
+    _270,
+}
+
+impl FromStr for Angle {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "90" => Ok(Angle::_90),
+            "180" => Ok(Angle::_180),
+            "270" => Ok(Angle::_270),
+            _ => Err("Invalid angle".to_string()),
+        }
+    }
 }
 
 fn main() {
@@ -43,6 +84,12 @@ fn main() {
             let factor = args.factor.unwrap_or(10);
             brighten(&args.infile, outfile, factor)
         },
+        Commands::Crop(args) => {
+            crop(&args.infile, &args.outfile, args.x, args.y, args.width, args.height)
+        },
+        Commands::Rotate(args) => {
+            rotate(&args.infile, &args.outfile, args.angle)
+        }
     }
 }
 
@@ -58,46 +105,23 @@ fn brighten(infile: &String, outfile: &String, factor: i32) {
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-//     let mut args: Vec<String> = std::env::args().skip(1).collect();
-//     if args.is_empty() {
-//         print_usage_and_exit();
-//     }
-//     let subcommand = args.remove(0);
-//     match subcommand.as_str() {
-//         "blur" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             // **OPTION**
-//             // Improve the blur implementation -- see the blur() function below
-//             blur(infile, outfile);
-//         },
-//         "brighten" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             brighten(infile, outfile);
-//         },
-//         "crop" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             crop(infile, outfile);
-//         },
-//         "rotate" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             rotate(infile, outfile);
-//         },
+fn crop(infile: &String, outfile: &String, x: u32, y: u32, width: u32, height: u32) {
+    let mut img = image::open(infile).expect("Failed to open INFILE.");
+    let img2 = img.crop(x, y, width, height);
+
+    img2.save(outfile).expect("Failed writing OUTFILE.");
+}
+
+fn rotate(infile: &String, outfile: &String, angle: Angle) {
+    let img = image::open(&infile).expect("Failed to open image");
+    let rotated_img = match angle {
+        Angle::_90 => img.rotate90(),
+        Angle::_180 => img.rotate180(),
+        Angle::_270 => img.rotate270(),
+    };
+
+    rotated_img.save(&outfile).expect("Failed writing OUTFILE.");
+}
 //         "invert" => {
 //             if args.len() != 2 {
 //                 print_usage_and_exit();
@@ -130,46 +154,7 @@ fn brighten(infile: &String, outfile: &String, factor: i32) {
 //             fractal(outfile);
 //         }
 //
-//         // **OPTION**
-//         // Generate -- see the generate() function below -- this should be sort of like "fractal()"!
 //
-//         // For everything else...
-//         _ => {
-//             print_usage_and_exit();
-//         }
-//     }
-// }
-//
-// fn print_usage_and_exit() {
-//     println!("USAGE (when in doubt, use a .png extension on your filenames)");
-//     println!("blur INFILE OUTFILE");
-//     println!("fractal OUTFILE");
-//     // **OPTION**
-//     // Print useful information about what subcommands and arguments you can use
-//     // println!("...");
-//     std::process::exit(-1);
-// }
-//
-//
-// fn crop(infile: String, outfile: String) {
-//     let mut img = image::open(infile).expect("Failed to open INFILE.");
-//     let img2 = img.crop(10, 10, 200, 300);
-//
-//     // Challenge: parse the four values from the command-line and pass them
-//     // through to this function.
-//
-//     img2.save(outfile).expect("Failed writing OUTFILE.");
-// }
-//
-// fn rotate(infile: String, outfile: String) {
-//     let img = image::open(&infile).expect("Failed to open image");
-//     let rotated_img = img.rotate180();
-//
-//     // Challenge: parse the rotation amount from the command-line, pass it
-//     // through to this function to select which method to call.
-//
-//     rotated_img.save(&outfile).expect("Failed writing OUTFILE.");
-// }
 //
 // fn invert(infile: String, outfile: String) {
 //     let mut img = image::open(infile).expect("Failed to open image");
