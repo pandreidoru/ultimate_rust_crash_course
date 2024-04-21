@@ -37,8 +37,20 @@ struct CmdArgs {
 struct CropArgs {
     infile: String,
     outfile: String,
+    #[command(flatten)]
+    point: Point,
+    #[command(flatten)]
+    dimensions: Dimensions,
+}
+
+#[derive(Args, Debug)]
+struct Point {
     x: u32,
     y: u32,
+}
+
+#[derive(Args, Debug)]
+struct Dimensions {
     width: u32,
     height: u32,
 }
@@ -85,7 +97,7 @@ fn main() {
             brighten(&args.infile, outfile, factor)
         },
         Commands::Crop(args) => {
-            crop(&args.infile, &args.outfile, args.x, args.y, args.width, args.height)
+            crop(&args.infile, &args.outfile, &args.point, &args.dimensions)
         },
         Commands::Rotate(args) => {
             rotate(&args.infile, &args.outfile, args.angle)
@@ -105,9 +117,9 @@ fn brighten(infile: &String, outfile: &String, factor: i32) {
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
 
-fn crop(infile: &String, outfile: &String, x: u32, y: u32, width: u32, height: u32) {
+fn crop(infile: &String, outfile: &String, p: &Point, d: &Dimensions) {
     let mut img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.crop(x, y, width, height);
+    let img2 = img.crop(p.x, p.y, d.width, d.height);
 
     img2.save(outfile).expect("Failed writing OUTFILE.");
 }
