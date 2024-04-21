@@ -23,6 +23,8 @@ enum Commands {
     Blur(CmdArgs),
     Brighten(CmdArgs),
     Crop(CropArgs),
+    Grayscale(IOFiles),
+    Invert(IOFiles),
     Rotate(RotateArgs),
 }
 
@@ -101,9 +103,15 @@ fn main() {
         Commands::Crop(args) => {
             crop(&args)
         },
+        Commands::Grayscale(args) => {
+            grayscale(&args)
+        },
+        Commands::Invert(args) => {
+            invert(&args)
+        },
         Commands::Rotate(args) => {
             rotate(&args)
-        }
+        },
     }
 }
 
@@ -131,8 +139,20 @@ fn crop(args: &CropArgs) {
     img2.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
+fn grayscale(args: &IOFiles) {
+    let img = image::open(&args.infile).expect("Failed to open INFILE.");
+    let img2 = img.grayscale();
+    img2.save(&args.outfile).expect("Failed writing OUTFILE.");
+}
+
+fn invert(args: &IOFiles) {
+    let mut img = image::open(&args.infile).expect("Failed to open INFILE.");
+    img.invert();
+    img.save(&args.outfile).expect("Failed writing OUTFILE.");
+}
+
 fn rotate(args: &RotateArgs) {
-    let img = image::open(&args.files.infile).expect("Failed to open image");
+    let img = image::open(&args.files.infile).expect("Failed to open INFILE.");
 
     let rotated_img = match args.angle {
         Angle::_90 => img.rotate90(),
@@ -142,22 +162,7 @@ fn rotate(args: &RotateArgs) {
 
     rotated_img.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
-//         "invert" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             invert(infile, outfile);
-//         },
-//         "grayscale" => {
-//             if args.len() != 2 {
-//                 print_usage_and_exit();
-//             }
-//             let infile = args.remove(0);
-//             let outfile = args.remove(0);
-//             grayscale(infile, outfile);
-//         },
+
 //         "generate" => {
 //             if args.len() != 1 {
 //                 print_usage_and_exit();
@@ -173,20 +178,6 @@ fn rotate(args: &RotateArgs) {
 //             let outfile = args.remove(0);
 //             fractal(outfile);
 //         }
-//
-//
-//
-// fn invert(infile: String, outfile: String) {
-//     let mut img = image::open(infile).expect("Failed to open image");
-//     img.invert();
-//     img.save(outfile).expect("Failed writing OUTFILE.");
-// }
-//
-// fn grayscale(infile: String, outfile: String) {
-//     let img = image::open(infile).expect("Failed to open INFILE.");
-//     let img2 = img.grayscale();
-//     img2.save(outfile).expect("Failed writing OUTFILE.");
-// }
 //
 // fn generate(outfile: String) {
 //     let width = 800;
