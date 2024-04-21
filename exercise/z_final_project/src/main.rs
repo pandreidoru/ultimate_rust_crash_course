@@ -28,15 +28,21 @@ enum Commands {
 
 #[derive(Args, Debug)]
 struct CmdArgs {
-    infile: String,
-    outfile: Option<String>,
+    #[command(flatten)]
+    files: IOFiles,
     factor: Option<i32>,
 }
 
 #[derive(Args, Debug)]
-struct CropArgs {
+struct IOFiles {
     infile: String,
     outfile: String,
+}
+
+#[derive(Args, Debug)]
+struct CropArgs {
+    #[command(flatten)]
+    files: IOFiles,
     #[command(flatten)]
     point: Point,
     #[command(flatten)]
@@ -57,8 +63,8 @@ struct Dimensions {
 
 #[derive(Args, Debug)]
 struct RotateArgs {
-    infile: String,
-    outfile: String,
+    #[command(flatten)]
+    files: IOFiles,
     #[arg(value_enum)]
     angle: Angle,
 }
@@ -87,52 +93,54 @@ fn main() {
     let cli = Cli::parse();
     match &cli.cmd {
         Commands::Blur(args) => {
-            let outfile = args.outfile.as_ref().expect("OUTFILE is required.");
-            let factor = args.factor.unwrap_or(10);
-            blur(&args.infile, outfile, factor)
+            blur(&args)
         },
         Commands::Brighten(args) => {
-            let outfile = args.outfile.as_ref().expect("OUTFILE is required.");
-            let factor = args.factor.unwrap_or(10);
-            brighten(&args.infile, outfile, factor)
+            brighten(&args)
         },
         Commands::Crop(args) => {
-            crop(&args.infile, &args.outfile, &args.point, &args.dimensions)
+            crop(&args)
         },
         Commands::Rotate(args) => {
-            rotate(&args.infile, &args.outfile, args.angle)
+            rotate(&args)
         }
     }
 }
 
-fn blur(infile: &String, outfile: &String, factor: i32) {
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.blur(factor as f32);
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn blur(args: &CmdArgs) {
+    let img = image::open(&args.files.infile).expect("Failed to open INFILE.");
+
+    let img2 = img.blur(args.factor.unwrap_or(10) as f32);
+
+    img2.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
-fn brighten(infile: &String, outfile: &String, factor: i32) {
-    let img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.brighten(factor);
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+fn brighten(args: &CmdArgs) {
+    let img = image::open(&args.files.infile).expect("Failed to open INFILE.");
+
+    let img2 = img.brighten(args.factor.unwrap_or(10));
+
+    img2.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
-fn crop(infile: &String, outfile: &String, p: &Point, d: &Dimensions) {
-    let mut img = image::open(infile).expect("Failed to open INFILE.");
-    let img2 = img.crop(p.x, p.y, d.width, d.height);
+fn crop(args: &CropArgs) {
+    let mut img = image::open(&args.files.infile).expect("Failed to open INFILE.");
 
-    img2.save(outfile).expect("Failed writing OUTFILE.");
+    let img2 = img.crop(args.point.x, args.point.y, args.dimensions.width, args.dimensions.height);
+
+    img2.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
-fn rotate(infile: &String, outfile: &String, angle: Angle) {
-    let img = image::open(&infile).expect("Failed to open image");
-    let rotated_img = match angle {
+fn rotate(args: &RotateArgs) {
+    let img = image::open(&args.files.infile).expect("Failed to open image");
+
+    let rotated_img = match args.angle {
         Angle::_90 => img.rotate90(),
         Angle::_180 => img.rotate180(),
         Angle::_270 => img.rotate270(),
     };
 
-    rotated_img.save(&outfile).expect("Failed writing OUTFILE.");
+    rotated_img.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 //         "invert" => {
 //             if args.len() != 2 {
