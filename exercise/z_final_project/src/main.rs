@@ -25,8 +25,8 @@ enum Commands {
     Crop(CropArgs),
     Fractal(FileArg),
     Generate(GenerateArg),
-    Grayscale(IOFiles),
-    Invert(IOFiles),
+    Grayscale(IOFilesArgs),
+    Invert(IOFilesArgs),
     Rotate(RotateArgs),
 }
 
@@ -38,12 +38,12 @@ struct FileArg {
 #[derive(Args, Debug)]
 struct CmdArgs {
     #[command(flatten)]
-    files: IOFiles,
+    files: IOFilesArgs,
     factor: Option<i32>,
 }
 
 #[derive(Args, Debug)]
-struct IOFiles {
+struct IOFilesArgs {
     infile: String,
     outfile: String,
 }
@@ -51,7 +51,7 @@ struct IOFiles {
 #[derive(Args, Debug)]
 struct CropArgs {
     #[command(flatten)]
-    files: IOFiles,
+    files: IOFilesArgs,
     #[command(flatten)]
     point: Point,
     #[command(flatten)]
@@ -87,7 +87,7 @@ struct Color {
 #[derive(Args, Debug)]
 struct RotateArgs {
     #[command(flatten)]
-    files: IOFiles,
+    files: IOFilesArgs,
     #[arg(value_enum)]
     angle: Angle,
 }
@@ -216,13 +216,13 @@ fn generate(args: &GenerateArg) {
     imgbuf.save(&args.file).unwrap();
 }
 
-fn grayscale(args: &IOFiles) {
+fn grayscale(args: &IOFilesArgs) {
     let img = image::open(&args.infile).expect("Failed to open INFILE.");
     let img2 = img.grayscale();
     img2.save(&args.outfile).expect("Failed writing OUTFILE.");
 }
 
-fn invert(args: &IOFiles) {
+fn invert(args: &IOFilesArgs) {
     let mut img = image::open(&args.infile).expect("Failed to open INFILE.");
     img.invert();
     img.save(&args.outfile).expect("Failed writing OUTFILE.");
