@@ -24,7 +24,7 @@ enum Commands {
     Brighten(CmdArgs),
     Crop(CropArgs),
     Fractal(FileArg),
-    Generate(FileArg),
+    Generate(GenerateArg),
     Grayscale(IOFiles),
     Invert(IOFiles),
     Rotate(RotateArgs),
@@ -71,6 +71,20 @@ struct Dimensions {
 }
 
 #[derive(Args, Debug)]
+struct GenerateArg {
+    file: String,
+    #[command(flatten)]
+    color: Color,
+}
+
+#[derive(Args, Debug)]
+struct Color {
+    r: Option<u8>,
+    g: Option<u8>,
+    b: Option<u8>,
+}
+
+#[derive(Args, Debug)]
 struct RotateArgs {
     #[command(flatten)]
     files: IOFiles,
@@ -114,7 +128,7 @@ fn main() {
             fractal(&args.file)
         },
         Commands::Generate(args) => {
-            generate(&args.file)
+            generate(&args)
         },
         Commands::Grayscale(args) => {
             grayscale(&args)
@@ -180,27 +194,26 @@ fn fractal(outfile: &String) {
             green += 1;
         }
 
-        // Actually set the pixel. red, green, and blue are u8 values!
         *pixel = image::Rgb([red, green, blue]);
     }
 
     imgbuf.save(outfile).unwrap();
 }
 
-fn generate(outfile: &String) {
+fn generate(args: &GenerateArg) {
     let width = 800;
     let height = 600;
     let mut imgbuf = image::ImageBuffer::new(width, height);
 
     for (_, _, pixel) in imgbuf.enumerate_pixels_mut() {
-        *pixel = image::Rgb([150u8, 0u8, 0u8]);
+        *pixel = image::Rgb([args.color.r.unwrap_or(0),
+            args.color.g.unwrap_or(0),
+            args.color.b.unwrap_or(0)]);
     }
-    // Challenge: parse some color data from the command-line, pass it through
-    // to this function to use for the solid color.
 
     // Challenge 2: Generate something more interesting!
 
-    imgbuf.save(outfile).unwrap();
+    imgbuf.save(&args.file).unwrap();
 }
 
 fn grayscale(args: &IOFiles) {
