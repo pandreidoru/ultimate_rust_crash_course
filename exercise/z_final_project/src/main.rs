@@ -24,6 +24,7 @@ enum Commands {
     Brighten(CmdArgs),
     Crop(CropArgs),
     Fractal(FileArg),
+    Generate(FileArg),
     Grayscale(IOFiles),
     Invert(IOFiles),
     Rotate(RotateArgs),
@@ -31,7 +32,7 @@ enum Commands {
 
 #[derive(Args, Debug)]
 struct FileArg {
-    outfile: String,
+    file: String,
 }
 
 #[derive(Args, Debug)]
@@ -110,7 +111,10 @@ fn main() {
             crop(&args)
         },
         Commands::Fractal(args) => {
-            fractal(&args.outfile)
+            fractal(&args.file)
+        },
+        Commands::Generate(args) => {
+            generate(&args.file)
         },
         Commands::Grayscale(args) => {
             grayscale(&args)
@@ -183,6 +187,22 @@ fn fractal(outfile: &String) {
     imgbuf.save(outfile).unwrap();
 }
 
+fn generate(outfile: &String) {
+    let width = 800;
+    let height = 600;
+    let mut imgbuf = image::ImageBuffer::new(width, height);
+
+    for (_, _, pixel) in imgbuf.enumerate_pixels_mut() {
+        *pixel = image::Rgb([150u8, 0u8, 0u8]);
+    }
+    // Challenge: parse some color data from the command-line, pass it through
+    // to this function to use for the solid color.
+
+    // Challenge 2: Generate something more interesting!
+
+    imgbuf.save(outfile).unwrap();
+}
+
 fn grayscale(args: &IOFiles) {
     let img = image::open(&args.infile).expect("Failed to open INFILE.");
     let img2 = img.grayscale();
@@ -207,31 +227,6 @@ fn rotate(args: &RotateArgs) {
     rotated_img.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
-//         "generate" => {
-//             if args.len() != 1 {
-//                 print_usage_and_exit();
-//             }
-//             let outfile = args.remove(0);
-//             generate(outfile);
-//         }
-
-// fn generate(outfile: String) {
-//     let width = 800;
-//     let height = 600;
-//     let mut imgbuf = image::ImageBuffer::new(width, height);
-//
-//     for (_, _, pixel) in imgbuf.enumerate_pixels_mut() {
-//         *pixel = image::Rgb([255u8, 0u8, 0u8]);
-//     }
-//     // Challenge: parse some color data from the command-line, pass it through
-//     // to this function to use for the solid color.
-//
-//     // Challenge 2: Generate something more interesting!
-//
-//     imgbuf.save(outfile).unwrap();
-// }
-//
-//
 // // **SUPER CHALLENGE FOR LATER** - Let's face it, you don't have time for this during class.
 // //
 // // Make all of the subcommands stackable!
