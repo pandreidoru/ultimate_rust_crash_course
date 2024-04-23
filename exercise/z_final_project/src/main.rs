@@ -23,9 +23,15 @@ enum Commands {
     Blur(CmdArgs),
     Brighten(CmdArgs),
     Crop(CropArgs),
+    Fractal(FileArg),
     Grayscale(IOFiles),
     Invert(IOFiles),
     Rotate(RotateArgs),
+}
+
+#[derive(Args, Debug)]
+struct FileArg {
+    outfile: String,
 }
 
 #[derive(Args, Debug)]
@@ -103,6 +109,9 @@ fn main() {
         Commands::Crop(args) => {
             crop(&args)
         },
+        Commands::Fractal(args) => {
+            fractal(&args.outfile)
+        },
         Commands::Grayscale(args) => {
             grayscale(&args)
         },
@@ -139,6 +148,41 @@ fn crop(args: &CropArgs) {
     img2.save(&args.files.outfile).expect("Failed writing OUTFILE.");
 }
 
+fn fractal(outfile: &String) {
+    let width = 800;
+    let height = 800;
+
+    let mut imgbuf = image::ImageBuffer::new(width, height);
+
+    let scale_x = 3.0 / width as f32;
+    let scale_y = 3.0 / height as f32;
+
+    // Iterate over the coordinates and pixels of the image
+    for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
+        // Use red and blue to be a pretty gradient background
+        let red = (0.3 * x as f32) as u8;
+        let blue = (0.3 * y as f32) as u8;
+
+        // Use green as the fractal foreground (here is the fractal math part)
+        let cx = y as f32 * scale_x - 1.5;
+        let cy = x as f32 * scale_y - 1.5;
+
+        let c = num_complex::Complex::new(-0.4, 0.6);
+        let mut z = num_complex::Complex::new(cx, cy);
+
+        let mut green = 0;
+        while green < 255 && z.norm() <= 2.0 {
+            z = z * z + c;
+            green += 1;
+        }
+
+        // Actually set the pixel. red, green, and blue are u8 values!
+        *pixel = image::Rgb([red, green, blue]);
+    }
+
+    imgbuf.save(outfile).unwrap();
+}
+
 fn grayscale(args: &IOFiles) {
     let img = image::open(&args.infile).expect("Failed to open INFILE.");
     let img2 = img.grayscale();
@@ -170,15 +214,7 @@ fn rotate(args: &RotateArgs) {
 //             let outfile = args.remove(0);
 //             generate(outfile);
 //         }
-//         // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
-//         "fractal" => {
-//             if args.len() != 1 {
-//                 print_usage_and_exit();
-//             }
-//             let outfile = args.remove(0);
-//             fractal(outfile);
-//         }
-//
+
 // fn generate(outfile: String) {
 //     let width = 800;
 //     let height = 600;
@@ -195,41 +231,6 @@ fn rotate(args: &RotateArgs) {
 //     imgbuf.save(outfile).unwrap();
 // }
 //
-// // This code was adapted from https://github.com/PistonDevelopers/image
-// fn fractal(outfile: String) {
-//     let width = 800;
-//     let height = 800;
-//
-//     let mut imgbuf = image::ImageBuffer::new(width, height);
-//
-//     let scale_x = 3.0 / width as f32;
-//     let scale_y = 3.0 / height as f32;
-//
-//     // Iterate over the coordinates and pixels of the image
-//     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-//         // Use red and blue to be a pretty gradient background
-//         let red = (0.3 * x as f32) as u8;
-//         let blue = (0.3 * y as f32) as u8;
-//
-//         // Use green as the fractal foreground (here is the fractal math part)
-//         let cx = y as f32 * scale_x - 1.5;
-//         let cy = x as f32 * scale_y - 1.5;
-//
-//         let c = num_complex::Complex::new(-0.4, 0.6);
-//         let mut z = num_complex::Complex::new(cx, cy);
-//
-//         let mut green = 0;
-//         while green < 255 && z.norm() <= 2.0 {
-//             z = z * z + c;
-//             green += 1;
-//         }
-//
-//         // Actually set the pixel. red, green, and blue are u8 values!
-//         *pixel = image::Rgb([red, green, blue]);
-//     }
-//
-//     imgbuf.save(outfile).unwrap();
-// }
 //
 // // **SUPER CHALLENGE FOR LATER** - Let's face it, you don't have time for this during class.
 // //
