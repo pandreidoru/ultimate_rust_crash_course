@@ -12,7 +12,8 @@ use crossterm::{
 
 // other imports
 use rusty_audio::Audio;
-use invaders::{frame, render};
+use invaders::{frame, player::Player, render};
+use invaders::frame::Drawable;
 use crate::event::Event;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -47,9 +48,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    let mut player = Player::new();
     'gameloop: loop {
         // Pre-frame init
-        let cur_frame = frame::new_frame();
+        let mut cur_frame = frame::new_frame();
+
 
         // Input
         while event::poll(Duration::default())? {
@@ -59,12 +62,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                         audio.play("lose");
                         break 'gameloop;
                     }
+                    KeyCode::Left => player.move_left(),
+                    KeyCode::Right => player.move_right(),
                     _ => {}
                 }
             }
         }
 
         // Draw and render
+        player.draw(&mut cur_frame);
         // Ignore result as the first frames send will fail until the render thread will be started
         let _ = render_tx.send(cur_frame).unwrap();
 
