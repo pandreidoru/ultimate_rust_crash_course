@@ -1,6 +1,7 @@
 // standard library imports
 use std::{io, error::Error, time::Duration, thread};
 use std::sync::mpsc;
+use std::time::Instant;
 
 // crossterm library imports
 use crossterm::{
@@ -49,8 +50,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let mut player = Player::new();
+    let mut instant = Instant::now();
+
     'gameloop: loop {
         // Pre-frame init
+        let delta = instant.elapsed();
+        instant = Instant::now();
         let mut cur_frame = frame::new_frame();
 
 
@@ -58,6 +63,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         while event::poll(Duration::default())? {
             if let Event::Key(key_event) = event::read()? {
                 match key_event.code {
+                    KeyCode::Char(' ') | KeyCode::Enter => {
+                        if player.shoot() {
+                            audio.play("pew");
+                        }
+                    }
                     KeyCode::Esc | KeyCode::Char('q') => {
                         audio.play("lose");
                         break 'gameloop;
@@ -68,6 +78,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                 }
             }
         }
+
+        // Updates
+        player.update(delta);
 
         // Draw and render
         player.draw(&mut cur_frame);
