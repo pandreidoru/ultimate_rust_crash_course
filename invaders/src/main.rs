@@ -1,21 +1,21 @@
 // standard library imports
-use std::{io, error::Error, time::Duration, thread};
 use std::sync::mpsc;
 use std::time::Instant;
+use std::{error::Error, io, thread, time::Duration};
 
 // crossterm library imports
 use crossterm::{
-    ExecutableCommand,
+    cursor::{Hide, Show},
     event::{self, KeyCode},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    cursor::{Hide, Show},
+    ExecutableCommand,
 };
 
 // other imports
-use rusty_audio::Audio;
-use invaders::{frame, player::Player, render};
-use invaders::frame::Drawable;
 use crate::event::Event;
+use invaders::frame::Drawable;
+use invaders::{frame, player::Player, render};
+use rusty_audio::Audio;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut audio = Audio::new();
@@ -58,7 +58,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         instant = Instant::now();
         let mut cur_frame = frame::new_frame();
 
-
         // Input
         while event::poll(Duration::default())? {
             if let Event::Key(key_event) = event::read()? {
@@ -84,6 +83,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Draw and render
         player.draw(&mut cur_frame);
+
         // Ignore result as the first frames send will fail until the render thread will be started
         let _ = render_tx.send(cur_frame).unwrap();
 

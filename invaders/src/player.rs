@@ -1,7 +1,7 @@
-use std::time::Duration;
-use crate::{NUM_COLS, NUM_ROWS};
 use crate::frame::{Drawable, Frame};
 use crate::shot::Shot;
+use crate::{NUM_COLS, NUM_ROWS};
+use std::time::Duration;
 
 pub struct Player {
     x: usize,
