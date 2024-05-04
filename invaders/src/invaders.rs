@@ -26,7 +26,7 @@ impl Invaders {
                 if (x > 1) && (x < NUM_COLS - 2)
                     // Not on first row
                     && (y > 0)
-                    // 7 rows
+                    // 4 rows of invaders
                     && (y < 9)
                     // Only on even cols
                     && (x % 2 == 0)
@@ -82,6 +82,27 @@ impl Invaders {
             return true;
         }
         false
+    }
+
+    pub fn all_killed(&self) -> bool {
+        self.army.is_empty()
+    }
+
+    pub fn reach_bottom(&self) -> bool {
+        self.army.iter().map(|invader| invader.y).max().unwrap_or(0) >= NUM_ROWS - 1
+    }
+
+    pub fn kill_invader_at(&mut self, x: usize, y: usize) -> bool {
+        if let Some(idx) = self
+            .army
+            .iter()
+            .position(|invader| (invader.x == x) && (invader.y == y))
+        {
+            self.army.remove(idx);
+            true
+        } else {
+            false
+        }
     }
 }
 
