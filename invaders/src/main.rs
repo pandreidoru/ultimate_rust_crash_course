@@ -14,6 +14,7 @@ use crossterm::{
 // other imports
 use crate::event::Event;
 use invaders::frame::Drawable;
+use invaders::invaders::Invaders;
 use invaders::{frame, player::Player, render};
 use rusty_audio::Audio;
 
@@ -51,12 +52,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
 
     'gameloop: loop {
         // Pre-frame init
         let delta = instant.elapsed();
         instant = Instant::now();
-        let mut cur_frame = frame::new_frame();
+        let mut curr_frame = frame::new_frame();
 
         // Input
         while event::poll(Duration::default())? {
@@ -80,12 +82,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Updates
         player.update(delta);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
 
         // Draw and render
-        player.draw(&mut cur_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders];
+        for drawable in drawables {
+            drawable.draw(&mut curr_frame);
+        }
 
         // Ignore result as the first frames send will fail until the render thread will be started
-        let _ = render_tx.send(cur_frame).unwrap();
+        let _ = render_tx.send(curr_frame).unwrap();
 
         // Wait for the slower render thread
         thread::sleep(Duration::from_millis(1));
